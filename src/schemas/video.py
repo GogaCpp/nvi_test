@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class VideoStatus(StrEnum):
@@ -27,7 +27,7 @@ class VideoBase(BaseModel):
 class CreateVideoPayload(BaseModel):
     video_path: str
     start_time: datetime | None = None
-    duration: int
+    duration: int = Field(ge=0)
     camera_number: int
     location: str
 
