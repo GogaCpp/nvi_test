@@ -1,0 +1,53 @@
+services:
+  videos-api:
+    build: .
+    container_name: videos-api
+    restart: unless-stopped
+    tty: true
+    ports:
+      - ${APP_PORT}:8000
+    depends_on:
+      vi-postgres:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    entrypoint: >
+      sh -c "alembic upgrade head
+      && uvicorn src.main:app --host 0.0.0.0 --port 8000"
+    networks:
+      - vi-network
+
+  vi-postgres:
+    image: postgres:16-alpine
+    container_name: vi-postgres
+    restart: always
+    volumes:
+      - vi-postgres-db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - 5432:5432
+    env_file:
+      - ./.env
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - vi-network
+
+
+networks:
+  vi-network:
+    driver: bridge
+
+volumes:
+  vi-postgres-db:
